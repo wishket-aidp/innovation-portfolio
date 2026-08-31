@@ -1,11 +1,11 @@
 export type DisclosureLevel = "public" | "internal" | "restricted";
 
 export type ProcessGroup =
-  | "영업 기회"
-  | "PI·판단"
-  | "업무범위·계약"
-  | "Delivery"
-  | "전환·종료";
+  | "고민/문제제기 단계"
+  | "현황 분석/가치 판단 단계"
+  | "구체화 및 확정 단계"
+  | "Delivery 단계"
+  | "전환 단계";
 
 /**
  * GP: Growth Partner — 고객 사업·계약 맥락 중심, GA·BDE로 인계 (구 컨설턴트/BRE)
