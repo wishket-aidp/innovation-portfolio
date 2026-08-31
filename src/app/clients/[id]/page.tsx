@@ -7,7 +7,6 @@ import {
   signedUrl,
 } from "@/lib/supabase-admin";
 import { PROCESS_STEPS } from "@/lib/process";
-import MaterialUploader from "@/components/MaterialUploader";
 
 export const dynamic = "force-dynamic";
 
@@ -164,10 +163,9 @@ export default async function ClientDetail({
         </section>
       )}
 
-      {/* 업로드 */}
-      <section className="mt-10">
-        <MaterialUploader clientId={id} />
-      </section>
+      <p className="mt-10 text-xs text-neutral-400">
+        자료는 홈어드민에서 싱크됩니다 (scripts/sync-materials.py).
+      </p>
     </main>
   );
 }

@@ -107,12 +107,3 @@ export async function signedUrl(path: string): Promise<string | null> {
   return data?.signedUrl ?? null;
 }
 
-/** 고객 존재 확인 (업로드 전 FK 검증용) */
-export async function clientExists(id: string): Promise<boolean> {
-  const { data } = await admin()
-    .from("clients")
-    .select("id")
-    .eq("id", id)
-    .maybeSingle();
-  return !!data;
-}
