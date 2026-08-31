@@ -9,7 +9,7 @@ export const metadata = {
 };
 
 export default async function ClientsIndex() {
-  // 접근 통제는 사이트 전체 미들웨어(Basic 인증)가 담당
+  // 접근 통제는 사이트 전체 프록시(세션 인증)가 담당
   const clients = await listClients();
 
   return (

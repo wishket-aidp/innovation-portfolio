@@ -1,17 +1,26 @@
 import "server-only";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * 서버 전용 Supabase 클라이언트 (service_role).
+ * 서버 전용 Supabase 클라이언트 (service_role) — 지연 생성.
  * 절대 클라이언트 컴포넌트에서 import 금지 — RLS를 우회하는 키다.
- * 고객 자료(기밀)는 이 클라이언트를 통해서만 접근한다.
+ * 모듈 로드 시점에 생성하지 않는다: 빌드(페이지 데이터 수집) 단계에서 env가
+ * 없어도 import가 실패하지 않도록. 실제 요청 시 첫 호출에서 생성된다.
  */
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-export const supabaseAdmin = createClient(url, serviceKey, {
-  auth: { persistSession: false },
-});
+let _client: SupabaseClient | null = null;
+export function admin(): SupabaseClient {
+  if (!_client) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !serviceKey) {
+      throw new Error("Supabase 환경변수가 설정되지 않았습니다.");
+    }
+    _client = createClient(url, serviceKey, {
+      auth: { persistSession: false },
+    });
+  }
+  return _client;
+}
 
 export const MATERIALS_BUCKET = "client-materials";
 
@@ -39,7 +48,7 @@ export interface ClientRow {
 
 /** 내부용: 실명 포함 고객 목록 (계약 체결 고객만) */
 export async function listClients(): Promise<ClientRow[]> {
-  const { data } = await supabaseAdmin
+  const { data } = await admin()
     .from("clients")
     .select("id, name, masked_name, industry, logo_file")
     .order("name");
@@ -47,7 +56,7 @@ export async function listClients(): Promise<ClientRow[]> {
 }
 
 export async function getClient(id: string): Promise<ClientRow | null> {
-  const { data } = await supabaseAdmin
+  const { data } = await admin()
     .from("clients")
     .select("id, name, masked_name, industry, logo_file")
     .eq("id", id)
@@ -58,7 +67,7 @@ export async function getClient(id: string): Promise<ClientRow | null> {
 export async function getClientMaterials(
   clientId: string,
 ): Promise<ClientMaterial[]> {
-  const { data } = await supabaseAdmin
+  const { data } = await admin()
     .from("client_materials")
     .select("*")
     .eq("client_id", clientId)
@@ -78,7 +87,7 @@ export interface ClientCaseRow {
 export async function getClientCases(
   clientId: string,
 ): Promise<ClientCaseRow[]> {
-  const { data } = await supabaseAdmin
+  const { data } = await admin()
     .from("cases")
     .select("step, masked_name, story, gained")
     .eq("client_id", clientId)
@@ -92,7 +101,7 @@ export async function getClientCases(
  * (업로드된 HTML/SVG 등의 stored XSS 방지).
  */
 export async function signedUrl(path: string): Promise<string | null> {
-  const { data } = await supabaseAdmin.storage
+  const { data } = await admin().storage
     .from(MATERIALS_BUCKET)
     .createSignedUrl(path, 3600, { download: true });
   return data?.signedUrl ?? null;
@@ -100,7 +109,7 @@ export async function signedUrl(path: string): Promise<string | null> {
 
 /** 고객 존재 확인 (업로드 전 FK 검증용) */
 export async function clientExists(id: string): Promise<boolean> {
-  const { data } = await supabaseAdmin
+  const { data } = await admin()
     .from("clients")
     .select("id")
     .eq("id", id)

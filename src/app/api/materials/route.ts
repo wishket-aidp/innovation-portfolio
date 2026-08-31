@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import {
-  supabaseAdmin,
+  admin,
   MATERIALS_BUCKET,
   clientExists,
 } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
-// 접근 통제는 사이트 전체 미들웨어(Basic 인증)가 담당한다.
+// 접근 통제는 사이트 전체 프록시(세션 인증)가 담당한다.
 
 // 고객 id 형식 (홈어드민 cuid / 안전 문자만) — 경로 조작(../, /) 차단
 const CLIENT_ID_RE = /^[A-Za-z0-9_-]{8,64}$/;
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
   const path = `${clientId}/${Date.now()}_${safeName}`;
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const { error: upErr } = await supabaseAdmin.storage
+  const { error: upErr } = await admin().storage
     .from(MATERIALS_BUCKET)
     .upload(path, buffer, {
       contentType: safeContentType,
@@ -106,7 +106,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: upErr.message }, { status: 500 });
   }
 
-  const { data, error: dbErr } = await supabaseAdmin
+  const { data, error: dbErr } = await admin()
     .from("client_materials")
     .insert({
       client_id: clientId,
@@ -123,7 +123,7 @@ export async function POST(request: Request) {
     .single();
   if (dbErr) {
     // 메타 저장 실패 시 업로드 파일 롤백
-    await supabaseAdmin.storage.from(MATERIALS_BUCKET).remove([path]);
+    await admin().storage.from(MATERIALS_BUCKET).remove([path]);
     return NextResponse.json({ error: dbErr.message }, { status: 500 });
   }
 
@@ -135,16 +135,16 @@ export async function DELETE(request: Request) {
   const id = new URL(request.url).searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id 필수" }, { status: 400 });
 
-  const { data: row } = await supabaseAdmin
+  const { data: row } = await admin()
     .from("client_materials")
     .select("storage_path")
     .eq("id", id)
     .maybeSingle();
   if (row?.storage_path) {
-    await supabaseAdmin.storage
+    await admin().storage
       .from(MATERIALS_BUCKET)
       .remove([row.storage_path]);
   }
-  await supabaseAdmin.from("client_materials").delete().eq("id", id);
+  await admin().from("client_materials").delete().eq("id", id);
   return NextResponse.json({ ok: true });
 }

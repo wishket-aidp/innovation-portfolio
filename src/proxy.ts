@@ -11,7 +11,7 @@ export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon\\.ico).*)"],
 };
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // 로그인 표면은 세션 없이 통과
