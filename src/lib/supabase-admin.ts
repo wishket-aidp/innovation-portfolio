@@ -107,3 +107,64 @@ export async function signedUrl(path: string): Promise<string | null> {
   return data?.signedUrl ?? null;
 }
 
+/** 주어진 고객들 중 해당 단계에 자료가 있는 client_id 목록 */
+export async function clientsWithMaterialsAtStep(
+  step: number,
+  clientIds: string[],
+): Promise<string[]> {
+  if (clientIds.length === 0) return [];
+  const { data } = await admin()
+    .from("client_materials")
+    .select("client_id")
+    .eq("step", step)
+    .in("client_id", clientIds);
+  return [...new Set((data ?? []).map((r) => r.client_id as string))];
+}
+
+export interface StageMaterial {
+  title: string;
+  category: string;
+  file_name: string | null;
+  url: string | null;
+}
+
+/**
+ * 특정 고객의 특정 단계 자료 (다운로드 서명 URL 포함) — 배치 서명.
+ * 프로세스 단계 사례에서 그 고객의 해당 단계 자료를 취합해 보여줄 때 사용.
+ */
+export async function getMaterialsByClientStep(
+  clientId: string,
+  step: number,
+): Promise<StageMaterial[]> {
+  const { data } = await admin()
+    .from("client_materials")
+    .select("title, category, file_name, storage_path")
+    .eq("client_id", clientId)
+    .eq("step", step)
+    .order("category")
+    .limit(200);
+  const rows = (data ?? []) as {
+    title: string;
+    category: string;
+    file_name: string | null;
+    storage_path: string;
+  }[];
+  if (rows.length === 0) return [];
+  const { data: signed } = await admin()
+    .storage.from(MATERIALS_BUCKET)
+    .createSignedUrls(
+      rows.map((r) => r.storage_path),
+      3600,
+      { download: true },
+    );
+  const urlByPath = new Map(
+    (signed ?? []).map((s) => [s.path ?? "", s.signedUrl]),
+  );
+  return rows.map((r) => ({
+    title: r.title,
+    category: r.category,
+    file_name: r.file_name,
+    url: urlByPath.get(r.storage_path) ?? null,
+  }));
+}
+

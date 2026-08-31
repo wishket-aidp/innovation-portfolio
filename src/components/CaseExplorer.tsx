@@ -3,12 +3,29 @@
 import { useState } from "react";
 import type { DetailedCase } from "@/lib/types";
 
+interface StageMaterial {
+  title: string;
+  category: string;
+  file_name: string | null;
+  url: string | null;
+}
+type CaseWithMaterials = DetailedCase & { materials?: StageMaterial[] };
+
+const CATEGORY_LABELS: Record<string, string> = {
+  proposal: "제안서",
+  transcript: "녹취록",
+  report: "보고서",
+  deck: "발표자료",
+  contract: "계약서",
+  file: "파일",
+};
+
 /**
  * 단계 상세의 고객 사례 목록 + 우측 슬라이드 상세 패널.
- * 고객사 카드 클릭 → 우측에서 패널이 슬라이드 인.
+ * 고객사 카드 클릭 → 우측에서 패널이 슬라이드 인. 자료실에서 취합한 해당 단계 자료도 표시.
  */
-export default function CaseExplorer({ cases }: { cases: DetailedCase[] }) {
-  const [selected, setSelected] = useState<DetailedCase | null>(null);
+export default function CaseExplorer({ cases }: { cases: CaseWithMaterials[] }) {
+  const [selected, setSelected] = useState<CaseWithMaterials | null>(null);
 
   if (cases.length === 0) {
     return (
@@ -36,9 +53,16 @@ export default function CaseExplorer({ cases }: { cases: DetailedCase[] }) {
             <p className="mt-2 text-sm leading-relaxed text-neutral-600">
               {c.declaration}
             </p>
-            <span className="mt-3 inline-block text-xs font-medium text-neutral-400">
-              사례 보기 →
-            </span>
+            <div className="mt-3 flex items-center gap-3">
+              <span className="text-xs font-medium text-neutral-400">
+                사례 보기 →
+              </span>
+              {c.materials && c.materials.length > 0 && (
+                <span className="text-xs text-neutral-400">
+                  자료 {c.materials.length}건
+                </span>
+              )}
+            </div>
           </button>
         ))}
       </div>
@@ -85,46 +109,60 @@ export default function CaseExplorer({ cases }: { cases: DetailedCase[] }) {
               </button>
             </div>
 
+            {/* 사례 설명이 없으면 안내 (자료만 있는 카드) */}
+            {selected.story.length === 0 && (
+              <div className="mt-8 rounded-lg bg-neutral-50 p-5 text-sm leading-relaxed text-neutral-500">
+                이 단계에서 이 고객과 오간 실제 자료입니다. 상세 사례 정리는 준비
+                중이며, 아래 자료로 어떤 과정이 있었는지 확인할 수 있습니다.
+              </div>
+            )}
+
             {/* 스토리 */}
-            <div className="mt-8 space-y-4">
-              {selected.story.map((para) => (
-                <p
-                  key={para.slice(0, 24)}
-                  className="text-[15px] leading-7 text-neutral-700"
-                >
-                  {para}
-                </p>
-              ))}
-            </div>
+            {selected.story.length > 0 && (
+              <div className="mt-8 space-y-4">
+                {selected.story.map((para) => (
+                  <p
+                    key={para.slice(0, 24)}
+                    className="text-[15px] leading-7 text-neutral-700"
+                  >
+                    {para}
+                  </p>
+                ))}
+              </div>
+            )}
 
             {/* 함께한 것 / 고객이 한 것 / AIDP가 한 것 */}
-            <div className="mt-10 space-y-6">
-              <RoleSection
-                title="고객과 AIDP가 함께한 것"
-                items={selected.together}
-                accent="bg-neutral-900"
-              />
-              <RoleSection
-                title="고객이 한 것"
-                items={selected.customerDid}
-                accent="bg-neutral-400"
-              />
-              <RoleSection
-                title="AIDP가 한 것"
-                items={selected.aidpDid}
-                accent="bg-neutral-600"
-              />
-            </div>
+            {selected.together.length > 0 && (
+              <div className="mt-10 space-y-6">
+                <RoleSection
+                  title="고객과 AIDP가 함께한 것"
+                  items={selected.together}
+                  accent="bg-neutral-900"
+                />
+                <RoleSection
+                  title="고객이 한 것"
+                  items={selected.customerDid}
+                  accent="bg-neutral-400"
+                />
+                <RoleSection
+                  title="AIDP가 한 것"
+                  items={selected.aidpDid}
+                  accent="bg-neutral-600"
+                />
+              </div>
+            )}
 
             {/* 이 단계에서 고객이 얻은 성과 */}
-            <div className="mt-10 rounded-xl bg-neutral-900 p-6 text-white">
-              <h3 className="mb-2 text-xs font-semibold tracking-wide text-neutral-400">
-                이 단계에서 고객이 얻은 것
-              </h3>
-              <p className="text-[15px] leading-7 text-neutral-100">
-                {selected.gained}
-              </p>
-            </div>
+            {selected.gained && (
+              <div className="mt-10 rounded-xl bg-neutral-900 p-6 text-white">
+                <h3 className="mb-2 text-xs font-semibold tracking-wide text-neutral-400">
+                  이 단계에서 고객이 얻은 것
+                </h3>
+                <p className="text-[15px] leading-7 text-neutral-100">
+                  {selected.gained}
+                </p>
+              </div>
+            )}
 
             {/* 이 단계의 발표/보고 자료 (있을 때만) */}
             {selected.deliverables && selected.deliverables.length > 0 && (
@@ -161,19 +199,56 @@ export default function CaseExplorer({ cases }: { cases: DetailedCase[] }) {
             )}
 
             {/* 다른 곳과 진행했다면 (추정) */}
-            <div className="mt-4 rounded-xl border border-dashed border-neutral-300 p-6">
-              <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold tracking-wide text-neutral-500">
-                <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-500">
-                  가정
-                </span>
-                다른 SI·컨설팅 업체와 진행했다면
-              </h3>
-              <p className="text-[15px] leading-7 text-neutral-600">
-                {selected.alternative}
-              </p>
-            </div>
+            {selected.alternative && (
+              <div className="mt-4 rounded-xl border border-dashed border-neutral-300 p-6">
+                <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold tracking-wide text-neutral-500">
+                  <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-500">
+                    가정
+                  </span>
+                  다른 SI·컨설팅 업체와 진행했다면
+                </h3>
+                <p className="text-[15px] leading-7 text-neutral-600">
+                  {selected.alternative}
+                </p>
+              </div>
+            )}
+
+            {/* 이 단계의 자료 (자료실에서 취합) */}
+            {selected.materials && selected.materials.length > 0 && (
+              <div className="mt-10">
+                <h3 className="mb-1 text-sm font-semibold tracking-wide text-neutral-500">
+                  이 단계의 자료 ({selected.materials.length})
+                </h3>
+                <p className="mb-3 text-xs text-neutral-400">
+                  고객 자료실에서 이 단계로 분류된 실제 자료입니다.
+                </p>
+                <ul className="space-y-1.5">
+                  {selected.materials.map((m, i) => (
+                    <li key={`${m.title}-${i}`}>
+                      <a
+                        href={m.url ?? "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 rounded-lg border border-neutral-100 px-3 py-2 text-sm transition hover:border-neutral-300"
+                      >
+                        <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-500">
+                          {CATEGORY_LABELS[m.category] ?? m.category}
+                        </span>
+                        <span className="truncate text-neutral-700">
+                          {m.title}
+                        </span>
+                        <span className="ml-auto shrink-0 text-xs text-neutral-400">
+                          ↓
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* 타임라인 */}
+            {selected.timeline.length > 0 && (
             <div className="mt-10">
               <h3 className="mb-4 text-sm font-semibold tracking-wide text-neutral-500">
                 타임라인
@@ -190,6 +265,7 @@ export default function CaseExplorer({ cases }: { cases: DetailedCase[] }) {
                 ))}
               </ol>
             </div>
+            )}
           </div>
         )}
       </aside>

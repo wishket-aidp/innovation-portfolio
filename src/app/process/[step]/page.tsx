@@ -1,18 +1,47 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PROCESS_STEPS, getStepBySlug } from "@/lib/process";
-import { getDetailedCases } from "@/lib/cases";
+import { getDetailedCases, DETAILED_CASES } from "@/lib/cases";
+import { CASE_CLIENT_IDS } from "@/lib/case-clients";
+import {
+  getMaterialsByClientStep,
+  clientsWithMaterialsAtStep,
+} from "@/lib/supabase-admin";
 import CaseExplorer from "@/components/CaseExplorer";
+
+// 사례 고객(마스킹) 메타 — client_id → {maskedName, industryTag, declaration}
+const CLIENT_META = new Map<
+  string,
+  { maskedName: string; industryTag: string; declaration: string }
+>();
+for (const c of DETAILED_CASES) {
+  const cid = CASE_CLIENT_IDS[c.maskedName];
+  if (cid && !CLIENT_META.has(cid)) {
+    CLIENT_META.set(cid, {
+      maskedName: c.maskedName,
+      industryTag: c.industryTag,
+      declaration: c.declaration,
+    });
+  }
+}
+const EMPTY_CASE = {
+  story: [],
+  together: [],
+  customerDid: [],
+  aidpDid: [],
+  gained: "",
+  alternative: "",
+  timeline: [],
+};
+
+// 자료실(DB) 서명 URL을 실시간 생성 → 동적 렌더 (사이트 전체가 로그인 뒤라 정적화 불필요)
+export const dynamic = "force-dynamic";
 
 const ROLE_LABELS: Record<string, string> = {
   GP: "Growth Partner",
   GA: "Growth Architect",
   BDE: "Business Develop Engineer",
 };
-
-export function generateStaticParams() {
-  return PROCESS_STEPS.map((step) => ({ step: step.slug }));
-}
 
 export default async function ProcessStepPage({
   params,
@@ -23,7 +52,37 @@ export default async function ProcessStepPage({
   const step = getStepBySlug(slug);
   if (!step) notFound();
 
-  const cases = getDetailedCases(step.no);
+  const handCases = getDetailedCases(step.no);
+  const handClientIds = new Set(
+    handCases.map((c) => CASE_CLIENT_IDS[c.maskedName]).filter(Boolean),
+  );
+
+  // 1) 하드코딩 사례: 설명 + 해당 단계 자료
+  const richCases = await Promise.all(
+    handCases.map(async (c) => {
+      const clientId = CASE_CLIENT_IDS[c.maskedName];
+      const materials = clientId
+        ? await getMaterialsByClientStep(clientId, step.no)
+        : [];
+      return { ...c, materials };
+    }),
+  );
+
+  // 2) 사례는 없지만 이 단계에 자료가 있는 고객: 자료만 (설명은 추후)
+  const matClientIds = await clientsWithMaterialsAtStep(step.no, [
+    ...CLIENT_META.keys(),
+  ]);
+  const materialOnly = await Promise.all(
+    matClientIds
+      .filter((cid) => !handClientIds.has(cid))
+      .map(async (cid) => {
+        const meta = CLIENT_META.get(cid)!;
+        const materials = await getMaterialsByClientStep(cid, step.no);
+        return { ...EMPTY_CASE, ...meta, step: step.no, materials };
+      }),
+  );
+
+  const cases = [...richCases, ...materialOnly];
   const prev = PROCESS_STEPS.find((s) => s.no === step.no - 1);
   const next = PROCESS_STEPS.find((s) => s.no === step.no + 1);
 
