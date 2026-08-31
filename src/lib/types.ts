@@ -18,16 +18,21 @@ export type Role = "GP" | "GA" | "BDE";
  * 대외 공개용 고객 관점 뷰.
  * 내부 운영 개념(PI, Gate, 통합정보, WBS 등)을 고객이 실제로 겪는 장면으로 실질화한다.
  * 홈페이지에는 이 뷰만 렌더하고, 내부 필드(outputs·gate·hasPlaybook)는 노출하지 않는다.
+ * 서술 원칙: 우리 중심이 아니라 고객 중심 — 고객이 놓인 상황에서 시작해 도달 상태로 끝난다.
  */
 export interface CustomerView {
   /** 대외용 단계명 (내부 용어 제거) */
   name: string;
   /** 고객에게 이 단계가 어떤 자리인지 한 줄 */
   headline: string;
-  /** 이 자리에서 고객이 실제로 하는 일·겪는 일 */
-  experience: string[];
-  /** 이 단계가 끝나면 고객 손에 남는 것 */
-  gets: string[];
+  /** 이 단계에 들어올 때 고객이 놓여 있는 상황 (공감 서술) */
+  situation: string;
+  /** 이 단계를 마치면 고객이 놓이게 되는 상태 */
+  outcome: string;
+  /** 이 단계에서 저희가 드리는 것 */
+  weProvide: string[];
+  /** 이 단계에서 고객이 하는 일 */
+  youDo: string[];
 }
 
 export interface ProcessStep {

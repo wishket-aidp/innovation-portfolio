@@ -44,32 +44,54 @@ export default async function ProcessStepPage({
         </p>
       </header>
 
-      {/* 이 자리에서 하는 일 */}
-      <section className="mb-12">
-        <h2 className="mb-4 text-lg font-semibold">이 자리에서 하는 일</h2>
-        <ul className="space-y-3">
-          {step.customer.experience.map((item) => (
-            <li key={item} className="flex gap-3 text-neutral-700">
-              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-900" />
-              {item}
-            </li>
-          ))}
-        </ul>
+      {/* 이 단계에 들어올 때 — 고객이 놓인 상황 */}
+      <section className="mb-10">
+        <h2 className="mb-3 text-sm font-semibold tracking-wide text-neutral-500">
+          이 단계에 들어올 때, 이런 상황일 수 있습니다
+        </h2>
+        <p className="text-[15px] leading-7 text-neutral-700">
+          {step.customer.situation}
+        </p>
       </section>
 
-      {/* 이 단계를 마치면 */}
-      <section className="mb-12">
-        <h2 className="mb-4 text-lg font-semibold">이 단계를 마치면</h2>
-        <ul className="space-y-2">
-          {step.customer.gets.map((item) => (
-            <li
-              key={item}
-              className="rounded-lg bg-neutral-50 px-4 py-3 text-neutral-700"
-            >
-              {item}
-            </li>
-          ))}
-        </ul>
+      {/* 저희가 드리는 것 / 고객이 하시는 일 */}
+      <section className="mb-10 grid gap-6 sm:grid-cols-2">
+        <div className="rounded-xl border border-neutral-200 p-6">
+          <h2 className="mb-4 text-sm font-semibold tracking-wide text-neutral-500">
+            저희가 드리는 것
+          </h2>
+          <ul className="space-y-3">
+            {step.customer.weProvide.map((item) => (
+              <li key={item} className="flex gap-3 text-sm leading-relaxed text-neutral-700">
+                <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-900" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="rounded-xl border border-neutral-200 p-6">
+          <h2 className="mb-4 text-sm font-semibold tracking-wide text-neutral-500">
+            고객이 하시는 일
+          </h2>
+          <ul className="space-y-3">
+            {step.customer.youDo.map((item) => (
+              <li key={item} className="flex gap-3 text-sm leading-relaxed text-neutral-700">
+                <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-400" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* 이 단계를 마치면 — 도달 상태 */}
+      <section className="mb-12 rounded-xl bg-neutral-900 p-7 text-white">
+        <h2 className="mb-3 text-sm font-semibold tracking-wide text-neutral-400">
+          이 단계를 마치면
+        </h2>
+        <p className="text-[15px] leading-7 text-neutral-100">
+          {step.customer.outcome}
+        </p>
       </section>
 
       {/* 함께하는 사람 */}
