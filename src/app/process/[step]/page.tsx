@@ -6,6 +6,7 @@ import { CASE_CLIENT_IDS } from "@/lib/case-clients";
 import {
   getMaterialsByClientStep,
   clientsWithMaterialsAtStep,
+  getStageSummary,
 } from "@/lib/supabase-admin";
 import CaseExplorer from "@/components/CaseExplorer";
 
@@ -77,8 +78,11 @@ export default async function ProcessStepPage({
       .filter((cid) => !handClientIds.has(cid))
       .map(async (cid) => {
         const meta = CLIENT_META.get(cid)!;
-        const materials = await getMaterialsByClientStep(cid, step.no);
-        return { ...EMPTY_CASE, ...meta, step: step.no, materials };
+        const [materials, summary] = await Promise.all([
+          getMaterialsByClientStep(cid, step.no),
+          getStageSummary(cid, step.no),
+        ]);
+        return { ...EMPTY_CASE, ...meta, step: step.no, materials, summary };
       }),
   );
 

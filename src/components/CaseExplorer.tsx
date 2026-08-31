@@ -9,7 +9,10 @@ interface StageMaterial {
   file_name: string | null;
   url: string | null;
 }
-type CaseWithMaterials = DetailedCase & { materials?: StageMaterial[] };
+type CaseWithMaterials = DetailedCase & {
+  materials?: StageMaterial[];
+  summary?: string | null;
+};
 
 const CATEGORY_LABELS: Record<string, string> = {
   proposal: "제안서",
@@ -109,13 +112,23 @@ export default function CaseExplorer({ cases }: { cases: CaseWithMaterials[] }) 
               </button>
             </div>
 
-            {/* 사례 설명이 없으면 안내 (자료만 있는 카드) */}
-            {selected.story.length === 0 && (
-              <div className="mt-8 rounded-lg bg-neutral-50 p-5 text-sm leading-relaxed text-neutral-500">
-                이 단계에서 이 고객과 오간 실제 자료입니다. 상세 사례 정리는 준비
-                중이며, 아래 자료로 어떤 과정이 있었는지 확인할 수 있습니다.
-              </div>
-            )}
+            {/* 사례 설명이 없으면 AI 요약(자료 기반) 또는 안내 */}
+            {selected.story.length === 0 &&
+              (selected.summary ? (
+                <div className="mt-8">
+                  <div className="mb-2 inline-block rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-500">
+                    자료 기반 요약
+                  </div>
+                  <p className="text-[15px] leading-7 text-neutral-700">
+                    {selected.summary}
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-8 rounded-lg bg-neutral-50 p-5 text-sm leading-relaxed text-neutral-500">
+                  이 단계에서 이 고객과 오간 실제 자료입니다. 아래 자료로 어떤
+                  과정이 있었는지 확인할 수 있습니다.
+                </div>
+              ))}
 
             {/* 스토리 */}
             {selected.story.length > 0 && (

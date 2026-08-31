@@ -107,6 +107,20 @@ export async function signedUrl(path: string): Promise<string | null> {
   return data?.signedUrl ?? null;
 }
 
+/** 특정 고객·단계의 AI 생성 요약 (없으면 null) */
+export async function getStageSummary(
+  clientId: string,
+  step: number,
+): Promise<string | null> {
+  const { data } = await admin()
+    .from("stage_summaries")
+    .select("summary")
+    .eq("client_id", clientId)
+    .eq("step", step)
+    .maybeSingle();
+  return data?.summary ?? null;
+}
+
 /** 주어진 고객들 중 해당 단계에 자료가 있는 client_id 목록 */
 export async function clientsWithMaterialsAtStep(
   step: number,
