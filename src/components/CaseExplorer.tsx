@@ -116,6 +116,29 @@ export default function CaseExplorer({ cases }: { cases: DetailedCase[] }) {
               />
             </div>
 
+            {/* 이 단계에서 고객이 얻은 성과 */}
+            <div className="mt-10 rounded-xl bg-neutral-900 p-6 text-white">
+              <h3 className="mb-2 text-xs font-semibold tracking-wide text-neutral-400">
+                이 단계에서 고객이 얻은 것
+              </h3>
+              <p className="text-[15px] leading-7 text-neutral-100">
+                {selected.gained}
+              </p>
+            </div>
+
+            {/* 다른 곳과 진행했다면 (추정) */}
+            <div className="mt-4 rounded-xl border border-dashed border-neutral-300 p-6">
+              <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold tracking-wide text-neutral-500">
+                <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-500">
+                  가정
+                </span>
+                다른 SI·컨설팅 업체와 진행했다면
+              </h3>
+              <p className="text-[15px] leading-7 text-neutral-600">
+                {selected.alternative}
+              </p>
+            </div>
+
             {/* 타임라인 */}
             <div className="mt-10">
               <h3 className="mb-4 text-sm font-semibold tracking-wide text-neutral-500">

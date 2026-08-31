@@ -81,6 +81,10 @@ export interface DetailedCase {
   customerDid: string[];
   /** AIDP가 한 것 */
   aidpDid: string[];
+  /** 이번 단계를 통해 고객이 얻어낸 성과 (추상적이어도 가시적으로) */
+  gained: string;
+  /** 위시켓 외 업체(SI·전략 컨설팅 등)와 진행했다면 맞닥뜨렸을 상황 (추정·제안 톤) */
+  alternative: string;
   /** 시간순 요약 */
   timeline: { date: string; label: string }[];
 }
