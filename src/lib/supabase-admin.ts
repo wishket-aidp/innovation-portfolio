@@ -89,10 +89,24 @@ export async function getClientCases(
   return (data as ClientCaseRow[]) ?? [];
 }
 
-/** 비공개 버킷 파일의 서명 URL (60분 유효) */
+/**
+ * 비공개 버킷 파일의 서명 URL (60분 유효).
+ * download:true 로 Content-Disposition: attachment 강제 → 브라우저가 렌더하지 않고 내려받음
+ * (업로드된 HTML/SVG 등의 stored XSS 방지).
+ */
 export async function signedUrl(path: string): Promise<string | null> {
   const { data } = await supabaseAdmin.storage
     .from(MATERIALS_BUCKET)
-    .createSignedUrl(path, 3600);
+    .createSignedUrl(path, 3600, { download: true });
   return data?.signedUrl ?? null;
+}
+
+/** 고객 존재 확인 (업로드 전 FK 검증용) */
+export async function clientExists(id: string): Promise<boolean> {
+  const { data } = await supabaseAdmin
+    .from("clients")
+    .select("id")
+    .eq("id", id)
+    .maybeSingle();
+  return !!data;
 }
