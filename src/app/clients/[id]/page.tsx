@@ -5,7 +5,6 @@ import {
   getClientCases,
   getClientMaterials,
   signedUrl,
-  isInternalAdmin,
 } from "@/lib/supabase-admin";
 import { PROCESS_STEPS } from "@/lib/process";
 import MaterialUploader from "@/components/MaterialUploader";
@@ -34,7 +33,6 @@ export default async function ClientDetail({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  if (!isInternalAdmin) notFound();
   const { id } = await params;
 
   const client = await getClient(id);

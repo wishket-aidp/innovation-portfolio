@@ -15,9 +15,6 @@ export const supabaseAdmin = createClient(url, serviceKey, {
 
 export const MATERIALS_BUCKET = "client-materials";
 
-/** 내부 관리 페이지 노출 여부 — 대외 배포에서는 INTERNAL_ADMIN 미설정으로 숨김 */
-export const isInternalAdmin = process.env.INTERNAL_ADMIN === "1";
-
 export interface ClientMaterial {
   id: string;
   client_id: string | null;

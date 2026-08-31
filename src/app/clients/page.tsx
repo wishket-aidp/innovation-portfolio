@@ -1,18 +1,15 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { listClients, isInternalAdmin } from "@/lib/supabase-admin";
+import { listClients } from "@/lib/supabase-admin";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "고객 자료실 (내부)",
+  title: "고객 자료실",
   robots: { index: false, follow: false },
 };
 
 export default async function ClientsIndex() {
-  // 내부 전용 — 대외 배포에서는 존재하지 않는 페이지처럼 404
-  if (!isInternalAdmin) notFound();
-
+  // 접근 통제는 사이트 전체 미들웨어(Basic 인증)가 담당
   const clients = await listClients();
 
   return (

@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import {
   supabaseAdmin,
   MATERIALS_BUCKET,
-  isInternalAdmin,
   clientExists,
 } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
+// 접근 통제는 사이트 전체 미들웨어(Basic 인증)가 담당한다.
 
 // 고객 id 형식 (홈어드민 cuid / 안전 문자만) — 경로 조작(../, /) 차단
 const CLIENT_ID_RE = /^[A-Za-z0-9_-]{8,64}$/;
@@ -46,15 +46,10 @@ const ALLOWED_MIME = new Set([
 ]);
 
 /**
- * 고객 자료 업로드 (내부 전용).
+ * 고객 자료 업로드 (사이트 전체가 내부 전용 — 미들웨어 Basic 인증 뒤).
  * multipart/form-data: file, clientId, title, category, step?, note?
- * 대외 배포(INTERNAL_ADMIN 미설정)에서는 404 — 이 라우트 자체가 없는 것처럼.
  */
 export async function POST(request: Request) {
-  if (!isInternalAdmin) {
-    return NextResponse.json({ error: "not found" }, { status: 404 });
-  }
-
   const form = await request.formData();
   const file = form.get("file");
   const clientId = form.get("clientId");
@@ -137,9 +132,6 @@ export async function POST(request: Request) {
 
 /** 자료 삭제 (내부 전용) — ?id= */
 export async function DELETE(request: Request) {
-  if (!isInternalAdmin) {
-    return NextResponse.json({ error: "not found" }, { status: 404 });
-  }
   const id = new URL(request.url).searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id 필수" }, { status: 400 });
 

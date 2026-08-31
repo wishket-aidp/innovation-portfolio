@@ -10,10 +10,18 @@ export default function Home() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-16">
       <header className="mb-16">
-        <p className="text-sm font-medium tracking-widest text-neutral-500">
-          AIDP INNOVATION PORTFOLIO
-        </p>
-        <h1 className="mt-2 text-3xl font-bold">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium tracking-widest text-neutral-500">
+            AIDP INNOVATION PORTFOLIO
+          </p>
+          <Link
+            href="/clients"
+            className="rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium text-neutral-600 transition hover:border-neutral-500"
+          >
+            고객 자료실 →
+          </Link>
+        </div>
+        <h1 className="mt-3 text-3xl font-bold">
           문제에서 증명까지, 고객과 함께 걷는 15개의 자리
         </h1>
         <p className="mt-3 text-neutral-600">

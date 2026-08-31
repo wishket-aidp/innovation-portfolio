@@ -2,13 +2,12 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 /**
- * 내부 관리 표면(/clients, /api/materials) 접근 게이트.
- * env 플래그(INTERNAL_ADMIN)를 kill-switch로, HTTP Basic 인증을 실제 인증 게이트로 사용한다.
- * (env 플래그 단독이 유일한 게이트가 되지 않도록 — 보안 리뷰 대응)
- * 프로덕션에서는 여기에 더해 Vercel Deployment Protection(SSO/비밀번호)을 권장.
+ * 사이트 전체가 내부 전용 — 전 경로에 HTTP Basic 인증을 강제한다.
+ * (정적 에셋 _next/*, favicon 제외. 자격증명 미설정 시 fail-closed 503 — 절대 개방 금지.)
+ * 프로덕션에서는 Vercel Deployment Protection(SSO/비밀번호) 병행 권장.
  */
 export const config = {
-  matcher: ["/clients", "/clients/:path*", "/api/materials", "/api/materials/:path*"],
+  matcher: ["/((?!_next/static|_next/image|favicon\\.ico).*)"],
 };
 
 function unauthorized() {
@@ -21,15 +20,11 @@ function unauthorized() {
 }
 
 export function middleware(req: NextRequest) {
-  // 대외 배포: 내부 관리 비활성 → 존재하지 않는 것처럼 404
-  if (process.env.INTERNAL_ADMIN !== "1") {
-    return new NextResponse("Not Found", { status: 404 });
-  }
-
   const user = process.env.INTERNAL_ADMIN_USER;
   const pass = process.env.INTERNAL_ADMIN_PASSWORD;
+  // 내부 전용 사이트는 자격증명 없이는 절대 열리지 않는다 (fail-closed)
   if (!user || !pass) {
-    return new NextResponse("Internal admin not configured", { status: 500 });
+    return new NextResponse("Not configured", { status: 503 });
   }
 
   const header = req.headers.get("authorization") ?? "";
@@ -43,7 +38,6 @@ export function middleware(req: NextRequest) {
     const sep = decoded.indexOf(":");
     const u = decoded.slice(0, sep);
     const p = decoded.slice(sep + 1);
-    // 길이 먼저 비교 후 상수시간 유사 비교
     if (u === user && p.length === pass.length && safeEqual(p, pass)) {
       return NextResponse.next();
     }
