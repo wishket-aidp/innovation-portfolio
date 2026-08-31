@@ -85,6 +85,11 @@ export interface DetailedCase {
   gained: string;
   /** 위시켓 외 업체(SI·전략 컨설팅 등)와 진행했다면 맞닥뜨렸을 상황 (추정·제안 톤) */
   alternative: string;
+  /**
+   * 이 단계의 발표/보고 자료 (킥오프·중간보고·클로징 워게임 덱 등).
+   * 홈어드민 Delivery > deliverables에 해당 단계 자료가 첨부되면 여기에 연결.
+   */
+  deliverables?: { title: string; url: string; note?: string }[];
   /** 시간순 요약 */
   timeline: { date: string; label: string }[];
 }

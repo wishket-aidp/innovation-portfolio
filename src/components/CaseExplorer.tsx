@@ -126,6 +126,40 @@ export default function CaseExplorer({ cases }: { cases: DetailedCase[] }) {
               </p>
             </div>
 
+            {/* 이 단계의 발표/보고 자료 (있을 때만) */}
+            {selected.deliverables && selected.deliverables.length > 0 && (
+              <div className="mt-10">
+                <h3 className="mb-3 text-sm font-semibold tracking-wide text-neutral-500">
+                  이 단계의 발표 자료
+                </h3>
+                <ul className="space-y-2">
+                  {selected.deliverables.map((d) => (
+                    <li key={d.url}>
+                      <a
+                        href={d.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 rounded-lg border border-neutral-200 px-4 py-3 text-sm transition hover:border-neutral-400"
+                      >
+                        <span className="text-neutral-400">📄</span>
+                        <span className="font-medium text-neutral-800">
+                          {d.title}
+                        </span>
+                        {d.note && (
+                          <span className="text-xs text-neutral-400">
+                            {d.note}
+                          </span>
+                        )}
+                        <span className="ml-auto text-xs text-neutral-400">
+                          열기 →
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {/* 다른 곳과 진행했다면 (추정) */}
             <div className="mt-4 rounded-xl border border-dashed border-neutral-300 p-6">
               <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold tracking-wide text-neutral-500">
