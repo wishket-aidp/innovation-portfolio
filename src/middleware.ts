@@ -1,54 +1,38 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { SESSION_COOKIE, verifySessionToken } from "./lib/session";
 
 /**
- * 사이트 전체가 내부 전용 — 전 경로에 HTTP Basic 인증을 강제한다.
- * (정적 에셋 _next/*, favicon 제외. 자격증명 미설정 시 fail-closed 503 — 절대 개방 금지.)
- * 프로덕션에서는 Vercel Deployment Protection(SSO/비밀번호) 병행 권장.
+ * 사이트 전체가 내부 전용 — 비밀번호 로그인(세션 쿠키) 없이는 접근 불가.
+ * 세션 미검증 시: 페이지는 /login 리다이렉트, API는 401.
+ * 자격증명 미설정 시 503 fail-closed. 정적 에셋 _next/*·favicon 제외.
  */
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon\\.ico).*)"],
 };
 
-function unauthorized() {
-  return new NextResponse("Authentication required", {
-    status: 401,
-    headers: {
-      "WWW-Authenticate": 'Basic realm="AIDP Internal", charset="UTF-8"',
-    },
-  });
-}
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
 
-export function middleware(req: NextRequest) {
-  const user = process.env.INTERNAL_ADMIN_USER;
-  const pass = process.env.INTERNAL_ADMIN_PASSWORD;
-  // 내부 전용 사이트는 자격증명 없이는 절대 열리지 않는다 (fail-closed)
-  if (!user || !pass) {
+  // 로그인 표면은 세션 없이 통과
+  if (pathname === "/login" || pathname === "/api/login") {
+    return NextResponse.next();
+  }
+
+  // 내부 전용 사이트는 비밀번호 미설정 시 절대 열리지 않는다 (fail-closed)
+  if (!process.env.INTERNAL_ADMIN_PASSWORD) {
     return new NextResponse("Not configured", { status: 503 });
   }
 
-  const header = req.headers.get("authorization") ?? "";
-  if (header.startsWith("Basic ")) {
-    let decoded = "";
-    try {
-      decoded = atob(header.slice(6));
-    } catch {
-      return unauthorized();
-    }
-    const sep = decoded.indexOf(":");
-    const u = decoded.slice(0, sep);
-    const p = decoded.slice(sep + 1);
-    if (u === user && p.length === pass.length && safeEqual(p, pass)) {
-      return NextResponse.next();
-    }
+  const token = req.cookies.get(SESSION_COOKIE)?.value;
+  if (await verifySessionToken(token)) {
+    return NextResponse.next();
   }
-  return unauthorized();
-}
 
-function safeEqual(a: string, b: string): boolean {
-  let diff = a.length ^ b.length;
-  for (let i = 0; i < a.length && i < b.length; i++) {
-    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  return diff === 0;
+  const loginUrl = new URL("/login", req.url);
+  loginUrl.searchParams.set("next", pathname + req.nextUrl.search);
+  return NextResponse.redirect(loginUrl);
 }

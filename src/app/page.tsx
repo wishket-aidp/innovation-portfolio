@@ -5,6 +5,7 @@ import {
   getStepsByGroup,
 } from "@/lib/process";
 import LogoMarquee from "@/components/LogoMarquee";
+import LogoutButton from "@/components/LogoutButton";
 
 export default function Home() {
   return (
@@ -14,12 +15,15 @@ export default function Home() {
           <p className="text-sm font-medium tracking-widest text-neutral-500">
             AIDP INNOVATION PORTFOLIO
           </p>
-          <Link
-            href="/clients"
-            className="rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium text-neutral-600 transition hover:border-neutral-500"
-          >
-            고객 자료실 →
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/clients"
+              className="rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium text-neutral-600 transition hover:border-neutral-500"
+            >
+              고객 자료실 →
+            </Link>
+            <LogoutButton />
+          </div>
         </div>
         <h1 className="mt-3 text-3xl font-bold">
           문제에서 증명까지, 고객과 함께 걷는 15개의 자리
