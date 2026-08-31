@@ -4,10 +4,14 @@ import {
   PUBLIC_GROUP_DESCRIPTIONS,
   getStepsByGroup,
 } from "@/lib/process";
+import { getStepCaseCounts } from "@/lib/case-counts";
 import LogoMarquee from "@/components/LogoMarquee";
 import LogoutButton from "@/components/LogoutButton";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const caseCounts = await getStepCaseCounts();
   return (
     <main className="mx-auto max-w-5xl px-6 py-16">
       <header className="mb-16">
@@ -58,6 +62,11 @@ export default function Home() {
                         {String(step.no).padStart(2, "0")}
                       </span>
                       <span className="font-medium">{step.customer.name}</span>
+                      {caseCounts[step.no] > 0 && (
+                        <span className="ml-auto rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-500">
+                          사례 {caseCounts[step.no]}
+                        </span>
+                      )}
                     </div>
                     <p className="mt-2 line-clamp-2 text-sm text-neutral-500">
                       {step.customer.headline}
